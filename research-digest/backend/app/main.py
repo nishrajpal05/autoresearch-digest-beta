@@ -21,9 +21,13 @@ app.add_middleware(
 )
 
 
+# ROOT ENDPOINT - http://localhost:8000/
 @app.get("/")
 def home():
-
+    """
+    Home page - just to check if API is running
+    Like checking if a store is open
+    """
     return {
         "message": "Nishmeet's AutoResearch Digest API is running!",
         "status": "healthy",
@@ -35,8 +39,13 @@ def home():
     }
 
 
+# HEALTH CHECK - http://localhost:8000/health
 @app.get("/health")
 def health_check():
+    """
+    Quick health check
+    Like asking 'Are you okay?'
+    """
     return {
         "status": "healthy",
         "message": "All systems operational! 💚"
@@ -49,8 +58,7 @@ def get_papers(
     category: Optional[str] = "cs.AI",  # Default to AI papers
     limit: Optional[int] = 10  # Default to 10 papers
 ):
-  
-    
+   
     # Validate inputs
     if limit > 50:
         limit = 50  # Don't allow more than 50 (to protect the server)
@@ -104,5 +112,5 @@ def get_paper(paper_id: str):
 # This runs when you start the server
 if __name__ == "__main__":
     import uvicorn
-    print("Starting AutoResearch Digest API...")
+    print(" Starting AutoResearch Digest API...")
     uvicorn.run(app, host="0.0.0.0", port=8000)
