@@ -22,8 +22,8 @@ function App() {
 
       // Call your backend API
       const response = await fetch(
-        `http://localhost:8000/papers?category=${category}&limit=10`
-      );
+  `https://your-render-url.onrender.com/papers?category=${category}&limit=10`
+);
       
       const data = await response.json();
 

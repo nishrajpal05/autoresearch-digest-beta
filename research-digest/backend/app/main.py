@@ -14,14 +14,17 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all websites (for now)
+    allow_origins=[
+        "http://localhost:3000",
+        "https://autoresearch-frontend.onrender.com",  
+        "https://*.onrender.com",  # Allow all Render preview URLs
+    ],
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods (GET, POST, etc.)
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
-# ROOT ENDPOINT - http://localhost:8000/
 @app.get("/")
 def home():
     """
