@@ -92,5 +92,5 @@ class Analytics(Base):
     event_type = Column(String, index=True)  # 'view', 'bookmark', 'explain', etc.
     user_id = Column(Integer, nullable=True)
     paper_id = Column(Integer, nullable=True)
-    metadata = Column(JSON)  # Additional event data
+    data = Column(JSON)  # Additional event data
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
