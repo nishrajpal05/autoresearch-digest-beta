@@ -93,12 +93,13 @@ function Dashboard() {
 
         <div className="papers-grid">
           {papers.map((paper, i) => (
-            <PaperCard 
-              key={i} 
-              paper={paper} 
-              onSimplify={handleSimplify}
-              token={token}
-            />
+        <PaperCard 
+            key={i} 
+            paper={paper} 
+            onSimplify={handleSimplify}
+            token={token}
+            userId={user?.id}
+        />
           ))}
         </div>
       </div>
