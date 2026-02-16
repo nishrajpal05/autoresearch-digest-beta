@@ -353,4 +353,57 @@ html {
 ::selection {
   background: #667eea;
   color: white;
+
+
+  .bookmark-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.bookmark-btn:hover {
+  transform: translateY(-1px);
+}
+
+.bookmark-btn.active {
+  background: #e6f0ff;
+  border-color: #4f8cff;
+}
+
+.bookmark-btn svg {
+  transition: transform 0.15s ease;
+}
+
+.bookmark-btn.active svg {
+  transform: scale(1.15);
+}
+
+.paper-header {
+  position: relative;
+}
+
+.bookmark-floating {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.bookmark-floating:hover {
+  background: rgba(0,0,0,0.05);
+  transform: scale(1.05);
+}
+
+.bookmark-floating.active {
+  color: #4f8cff;
+}
+
+
 }
