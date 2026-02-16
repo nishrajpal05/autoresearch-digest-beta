@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { FaBookmark, FaRegBookmark } from "react-icons/fa";
 
 function PaperCard({ paper, onSimplify, token, userId, isBookmarked = false }) {
   const [loading, setLoading] = useState(false);
   const [bookmarked, setBookmarked] = useState(isBookmarked);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
 
   const handleSimplify = async () => {
     setLoading(true);
@@ -11,6 +13,10 @@ function PaperCard({ paper, onSimplify, token, userId, isBookmarked = false }) {
   };
 
   const handleBookmark = async () => {
+    if (bookmarkLoading) return; // prevent spam clicking
+
+    setBookmarkLoading(true);
+
     try {
       const res = await fetch(
         `http://localhost:8000/papers/${paper.db_id}/bookmark?user_id=${userId}`,
@@ -19,25 +25,35 @@ function PaperCard({ paper, onSimplify, token, userId, isBookmarked = false }) {
           headers: { Authorization: `Bearer ${token}` }
         }
       );
+
       const data = await res.json();
+
       if (data.success) {
         setBookmarked(data.bookmarked);
       }
+
     } catch (err) {
       console.error(err);
     }
+
+    setBookmarkLoading(false);
   };
 
   return (
     <div className="paper-card">
+
       <div className="paper-header">
         <h3 className="paper-title">{paper.title}</h3>
       </div>
-      
-      <p className="paper-meta">{paper.authors} • {paper.published}</p>
-      
-      <p className="paper-summary">{paper.summary}</p>
-      
+
+      <p className="paper-meta">
+        {paper.authors} • {paper.published}
+      </p>
+
+      <p className="paper-summary">
+        {paper.summary}
+      </p>
+
       {paper.simplified && (
         <div className="simplified-box">
           <h4>Simple Explanation</h4>
@@ -46,8 +62,9 @@ function PaperCard({ paper, onSimplify, token, userId, isBookmarked = false }) {
           </p>
         </div>
       )}
-      
+
       <div className="paper-actions">
+
         <button 
           onClick={handleSimplify}
           className="btn btn-primary btn-sm"
@@ -55,6 +72,7 @@ function PaperCard({ paper, onSimplify, token, userId, isBookmarked = false }) {
         >
           {loading ? "Simplifying..." : "Explain Simply"}
         </button>
+
         <a 
           href={paper.pdf_url} 
           target="_blank" 
@@ -63,15 +81,22 @@ function PaperCard({ paper, onSimplify, token, userId, isBookmarked = false }) {
         >
           Read PDF
         </a>
+
         {userId && (
           <button 
             onClick={handleBookmark}
-            className="btn btn-secondary btn-sm"
+            className={`btn btn-secondary btn-sm bookmark-btn ${bookmarked ? "active" : ""}`}
+            disabled={bookmarkLoading}
           >
-            {bookmarked ? " Saved" : " Bookmark"}
+            {bookmarked ? <FaBookmark /> : <FaRegBookmark />}
+            <span>
+              {bookmarkLoading ? "Saving..." : (bookmarked ? "Saved" : "Bookmark")}
+            </span>
           </button>
         )}
+
       </div>
+
     </div>
   );
 }
