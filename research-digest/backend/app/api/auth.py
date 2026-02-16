@@ -4,6 +4,14 @@ from ..db.database import get_db
 from ..models.user import User
 from ..services.auth import get_password_hash, verify_password, create_access_token
 from pydantic import BaseModel, EmailStr
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import RedirectResponse
+from sqlalchemy.orm import Session
+from ..db.database import get_db
+from ..models.user import User
+from ..services.auth import create_access_token
+from ..services.oauth import oauth
+from pydantic import BaseModel, EmailStr
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -42,3 +50,83 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
     
     token = create_access_token({"sub": str(user.id)})
     return {"token": token, "user": {"id": user.id, "email": user.email, "full_name": user.full_name}}
+
+@router.get("/google")
+async def google_login(request: Request):
+    redirect_uri = "http://localhost:8000/auth/google/callback"
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+@router.get("/google/callback")
+async def google_callback(request: Request, db: Session = Depends(get_db)):
+    try:
+        token = await oauth.google.authorize_access_token(request)
+        user_info = token.get('userinfo')
+        
+        email = user_info['email']
+        full_name = user_info.get('name', '')
+        oauth_id = user_info['sub']
+        
+        user = db.query(User).filter(User.email == email).first()
+        
+        if not user:
+            user = User(
+                email=email,
+                full_name=full_name,
+                oauth_provider='google',
+                oauth_id=oauth_id
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        
+        jwt_token = create_access_token({"sub": str(user.id)})
+        
+        return RedirectResponse(
+            url=f"http://localhost:3000/auth/callback?token={jwt_token}&user={user.id}"
+        )
+    except Exception as e:
+        return RedirectResponse(url=f"http://localhost:3000/login?error={str(e)}")
+
+@router.get("/github")
+async def github_login(request: Request):
+    redirect_uri = "http://localhost:8000/auth/github/callback"
+    return await oauth.github.authorize_redirect(request, redirect_uri)
+
+@router.get("/github/callback")
+async def github_callback(request: Request, db: Session = Depends(get_db)):
+    try:
+        token = await oauth.github.authorize_access_token(request)
+        
+        resp = await oauth.github.get('user', token=token)
+        user_info = resp.json()
+        
+        email_resp = await oauth.github.get('user/emails', token=token)
+        emails = email_resp.json()
+        email = next((e['email'] for e in emails if e['primary']), None)
+        
+        if not email:
+            raise Exception("No email found")
+        
+        full_name = user_info.get('name', user_info.get('login', ''))
+        oauth_id = str(user_info['id'])
+        
+        user = db.query(User).filter(User.email == email).first()
+        
+        if not user:
+            user = User(
+                email=email,
+                full_name=full_name,
+                oauth_provider='github',
+                oauth_id=oauth_id
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        
+        jwt_token = create_access_token({"sub": str(user.id)})
+        
+        return RedirectResponse(
+            url=f"http://localhost:3000/auth/callback?token={jwt_token}&user={user.id}"
+        )
+    except Exception as e:
+        return RedirectResponse(url=f"http://localhost:3000/login?error={str(e)}")
