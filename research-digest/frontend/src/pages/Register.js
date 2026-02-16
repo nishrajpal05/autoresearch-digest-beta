@@ -17,8 +17,7 @@ function Register() {
     setError("");
 
     try {
-        const res = await fetch("http://localhost:8000/auth/register", {
-    //   const res = await fetch("https://autoresearch-digest-beta.onrender.com/auth/register", {
+      const res = await fetch("http://localhost:8000/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -41,6 +40,10 @@ function Register() {
     }
   };
 
+  const handleOAuthLogin = (provider) => {
+    window.location.href = `http://localhost:8000/auth/${provider}`;
+  };
+
   return (
     <div className="auth-container">
       <div className="auth-card">
@@ -57,6 +60,27 @@ function Register() {
             {error}
           </div>
         )}
+
+        <div style={{ marginBottom: '24px' }}>
+          <button 
+            onClick={() => handleOAuthLogin('google')}
+            className="btn btn-secondary"
+            style={{ width: '100%', marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+          >
+            <span>🔵</span> Continue with Google
+          </button>
+          <button 
+            onClick={() => handleOAuthLogin('github')}
+            className="btn btn-secondary"
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+          >
+            <span>⚫</span> Continue with GitHub
+          </button>
+        </div>
+
+        <div style={{ textAlign: 'center', margin: '24px 0', color: 'var(--text-secondary)' }}>
+          or
+        </div>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
