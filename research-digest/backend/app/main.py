@@ -1,11 +1,23 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from .db.database import engine, Base
-from .api import auth, papers
+from dotenv import load_dotenv
+from pathlib import Path
+import os
+env_path = Path(__file__).parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
+
+from fastapi import FastAPI  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware # noqa: E402
+from starlette.middleware.sessions import SessionMiddleware # noqa: E402
+from .db.database import engine, Base # noqa: E402
+from .api import auth, papers  # noqa: E402
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="AutoResearch Digest API v2", version="2.0.0")
+
+app.add_middleware(
+    SessionMiddleware, 
+    secret_key=os.getenv("SECRET_KEY", "dev-secret-key")
+)
 
 app.add_middleware(
     CORSMiddleware,

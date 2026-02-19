@@ -1,15 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from ..db.database import get_db
-from ..models.user import User
-from ..services.auth import get_password_hash, verify_password, create_access_token
-from pydantic import BaseModel, EmailStr
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from ..db.database import get_db
 from ..models.user import User
-from ..services.auth import create_access_token
+from ..services.auth import get_password_hash, verify_password, create_access_token
 from ..services.oauth import oauth
 from pydantic import BaseModel, EmailStr
 

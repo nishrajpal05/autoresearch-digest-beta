@@ -9,19 +9,30 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (token) {
       localStorage.setItem("token", token);
+      // If we have token but no user, try to get user info
+      if (!user) {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
+      }
     } else {
       localStorage.removeItem("token");
+      localStorage.removeItem("user");
     }
-  }, [token]);
+  }, [token, user]);
 
   const login = (authToken, userData) => {
     setToken(authToken);
     setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
   };
 
   const logout = () => {
     setToken(null);
     setUser(null);
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
   };
 
   return (

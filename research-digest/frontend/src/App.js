@@ -4,11 +4,12 @@ import { useContext } from "react";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import LandingPage from "./pages/LandingPage";
-import Login from "./pages/login";
+import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Bookmarks from "./pages/Bookmarks";
 import Settings from "./pages/Settings";
+import OAuthCallback from "./pages/OAuthCallback";  // ADD THIS LINE
 import "./styles/App.css";
 
 function ProtectedRoute({ children }) {
@@ -33,6 +34,7 @@ function App() {
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/bookmarks" element={<ProtectedRoute><Bookmarks /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/auth/callback" element={<OAuthCallback />} />
         </Routes>
         <Footer />
       </BrowserRouter>

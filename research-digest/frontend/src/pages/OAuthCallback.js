@@ -18,7 +18,7 @@ function OAuthCallback() {
       login(token, { id: userId });
       navigate('/dashboard');
     }
-  }, []);
+  }, [searchParams, login, navigate]);
 
   return (
     <div className="loading-container">
