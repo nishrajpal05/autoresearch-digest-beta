@@ -17,7 +17,8 @@ function Register() {
     setError("");
 
     try {
-      const res = await fetch("http://localhost:8000/auth/register", {
+      const res = await fetch("https://autoresearch-digest-beta-1.onrender.com/auth/register", {
+      // const res = await fetch("http://localhost:8000auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -75,7 +76,8 @@ function GitHubIcon() {
 }
 
   const handleOAuthLogin = (provider) => {
-    window.location.href = `http://localhost:8000/auth/${provider}`;
+    window.location.href = `https://autoresearch-digest-beta-1.onrender.com/auth/${provider}`;
+    // window.location.href = `http://localhost:8000auth/${provider}`;
   };
 
   return (

@@ -19,7 +19,8 @@ function PaperCard({ paper, onSimplify, token, userId, isBookmarked = false }) {
 
     try {
       const res = await fetch(
-        `http://localhost:8000/papers/${paper.db_id}/bookmark?user_id=${userId}`,
+        `https://autoresearch-digest-beta-1.onrender.com/papers/${paper.db_id}/bookmark?user_id=${userId}`,
+        // `http://localhost:8000papers/${paper.db_id}/bookmark?user_id=${userId}`,
         { 
           method: "POST",
           headers: { Authorization: `Bearer ${token}` }

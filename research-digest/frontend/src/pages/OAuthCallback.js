@@ -24,7 +24,8 @@ function OAuthCallback() {
       }
 
       try {
-        const response = await fetch("http://localhost:8000/auth/me", {
+        const response = await fetch("https://autoresearch-digest-beta-1.onrender.com/auth/me", {
+        // const response = await fetch("http://localhost:8000auth/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
 

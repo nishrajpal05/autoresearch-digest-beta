@@ -15,7 +15,8 @@ function Bookmarks() {
     setLoading(true);
     try {
       const res = await fetch(
-        `http://localhost:8000/papers/bookmarks/${user.id}`,
+        `https://autoresearch-digest-beta-1.onrender.com/papers/bookmarks/${user.id}`,
+        // `http://localhost:8000papers/bookmarks/${user.id}`,
         { headers: { Authorization: `Bearer ${token}` }}
       );
       const data = await res.json();

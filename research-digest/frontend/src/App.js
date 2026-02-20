@@ -9,7 +9,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Bookmarks from "./pages/Bookmarks";
 import Settings from "./pages/Settings";
-import OAuthCallback from "./pages/OAuthCallback";  // ADD THIS LINE
+import OAuthCallback from "./pages/OAuthCallback"; 
 import "./styles/App.css";
 
 function ProtectedRoute({ children }) {
@@ -43,3 +43,6 @@ function App() {
 }
 
 export default App;
+
+
+//https://autoresearch-digest-beta-1.onrender.com/

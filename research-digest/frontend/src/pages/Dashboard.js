@@ -28,7 +28,7 @@ function Dashboard() {
     //   const res = await fetch(
     //     `https://autoresearch-digest-beta.onrender.com/papers?category=${category}&limit=10`,
     const res = await fetch(
-  `http://localhost:8000/papers?category=${category}&limit=10`,
+  `https://autoresearch-digest-beta-1.onrender.com//papers?category=${category}&limit=10`,
         { headers: { Authorization: `Bearer ${token}` }}
       );
       const data = await res.json();
@@ -44,7 +44,7 @@ function Dashboard() {
     //   const res = await fetch(
     //     `https://autoresearch-digest-beta.onrender.com/papers/${paperId}/simplify`,
     const res = await fetch(
-  `http://localhost:8000/papers/${paperId}/simplify`,
+  `https://autoresearch-digest-beta-1.onrender.com//papers/${paperId}/simplify`,
         { 
           method: "POST",
           headers: { Authorization: `Bearer ${token}` }

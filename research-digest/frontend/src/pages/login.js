@@ -51,7 +51,7 @@ function Login() {
 
     try {
 
-      const res = await fetch("http://localhost:8000/auth/login", {
+      const res = await fetch("https://autoresearch-digest-beta-1.onrender.com/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })
@@ -72,7 +72,7 @@ function Login() {
   };
 
   const handleOAuthLogin = (provider) => {
-    window.location.href = `http://localhost:8000/auth/${provider}`;
+    window.location.href = `https://autoresearch-digest-beta-1.onrender.com/auth/${provider}`;
   };
 
   return (
