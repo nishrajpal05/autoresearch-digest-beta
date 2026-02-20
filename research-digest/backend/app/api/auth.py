@@ -3,7 +3,12 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from ..db.database import get_db
 from ..models.user import User
-from ..services.auth import get_password_hash, verify_password, create_access_token
+from ..services.auth import (
+    get_password_hash,
+    verify_password,
+    create_access_token,
+    verify_token,
+)
 from ..services.oauth import oauth
 from pydantic import BaseModel, EmailStr
 
@@ -17,6 +22,13 @@ class UserRegister(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+
+def _extract_bearer_token(request: Request) -> str | None:
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        return auth_header.split(" ", 1)[1]
+    return None
 
 @router.post("/register")
 def register(user_data: UserRegister, db: Session = Depends(get_db)):
@@ -44,6 +56,28 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
     
     token = create_access_token({"sub": str(user.id)})
     return {"token": token, "user": {"id": user.id, "email": user.email, "full_name": user.full_name}}
+
+
+@router.get("/me")
+def get_current_user(request: Request, db: Session = Depends(get_db)):
+    token = _extract_bearer_token(request)
+    if not token:
+        raise HTTPException(status_code=401, detail="Missing token")
+
+    payload = verify_token(token)
+    if not payload or "sub" not in payload:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    user = db.query(User).filter(User.id == int(payload["sub"])).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {
+        "id": user.id,
+        "email": user.email,
+        "full_name": user.full_name,
+        "preferred_categories": user.preferred_categories,
+    }
 
 @router.get("/google")
 async def google_login(request: Request):

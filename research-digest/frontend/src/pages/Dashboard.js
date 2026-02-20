@@ -7,6 +7,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("cs.AI");
   const { token, user } = useContext(AuthContext);
+  const displayName = user?.full_name || user?.email?.split('@')[0] || "there";
 
   const categories = [
     { id: "cs.AI", label: "Artificial Intelligence" },
@@ -75,7 +76,7 @@ function Dashboard() {
     <div className="dashboard">
       <div className="container">
         <div className="dashboard-header">
-          <h1>Welcome back, {user?.email?.split('@')[0] || 'there'}</h1>
+          <h1>Welcome back, {displayName}</h1>
           <p>Discover the latest research in your field</p>
         </div>
 

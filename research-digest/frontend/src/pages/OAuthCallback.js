@@ -8,16 +8,40 @@ function OAuthCallback() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = searchParams.get('token');
-    const userId = searchParams.get('user');
-    const error = searchParams.get('error');
+    const completeOAuthLogin = async () => {
+      const token = searchParams.get('token');
+      const userId = searchParams.get('user');
+      const error = searchParams.get('error');
 
-    if (error) {
-      navigate('/login?error=' + error);
-    } else if (token && userId) {
-      login(token, { id: userId });
+      if (error) {
+        navigate('/login?error=' + error);
+        return;
+      }
+
+      if (!token || !userId) {
+        navigate('/login?error=Missing OAuth callback data');
+        return;
+      }
+
+      try {
+        const response = await fetch("http://localhost:8000/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to load user profile");
+        }
+
+        const user = await response.json();
+        login(token, user);
+      } catch (err) {
+        login(token, { id: userId });
+      }
+
       navigate('/dashboard');
-    }
+    };
+
+    completeOAuthLogin();
   }, [searchParams, login, navigate]);
 
   return (
