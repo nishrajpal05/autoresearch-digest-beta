@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FaBookmark, FaRegBookmark } from "react-icons/fa";
 
-function PaperCard({ paper, onSimplify, token, userId, isBookmarked = false }) {
+function PaperCard({ paper, onSimplify, userId, isBookmarked = false }) {
   const [loading, setLoading] = useState(false);
   const [bookmarked, setBookmarked] = useState(isBookmarked);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
@@ -21,10 +21,7 @@ function PaperCard({ paper, onSimplify, token, userId, isBookmarked = false }) {
       const res = await fetch(
         `https://autoresearch-digest-beta-1.onrender.com/papers/${paper.db_id}/bookmark?user_id=${userId}`,
         // `http://localhost:8000papers/${paper.db_id}/bookmark?user_id=${userId}`,
-        { 
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` }
-        }
+        { method: "POST" }
       );
 
       const data = await res.json();

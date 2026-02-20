@@ -5,7 +5,7 @@ import PaperCard from "../components/PaperCard";
 function Bookmarks() {
   const [bookmarks, setBookmarks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { token, user } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
     fetchBookmarks();
@@ -15,9 +15,7 @@ function Bookmarks() {
     setLoading(true);
     try {
       const res = await fetch(
-        `https://autoresearch-digest-beta-1.onrender.com/papers/bookmarks/${user.id}`,
-        // `http://localhost:8000papers/bookmarks/${user.id}`,
-        { headers: { Authorization: `Bearer ${token}` }}
+        `https://autoresearch-digest-beta-1.onrender.com/papers/bookmarks/${user.id}`
       );
       const data = await res.json();
       setBookmarks(data.papers || []);
@@ -30,11 +28,8 @@ function Bookmarks() {
   const handleSimplify = async (paperId) => {
     try {
       const res = await fetch(
-        `http://localhost:8000/papers/${paperId}/simplify`,
-        { 
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` }
-        }
+        `https://autoresearch-digest-beta-1.onrender.com/papers/${paperId}/simplify`,
+        { method: "POST" }
       );
       const data = await res.json();
       if (data.success) {
@@ -79,7 +74,6 @@ function Bookmarks() {
                 key={i} 
                 paper={paper} 
                 onSimplify={handleSimplify}
-                token={token}
                 userId={user.id}
                 isBookmarked={true}
               />

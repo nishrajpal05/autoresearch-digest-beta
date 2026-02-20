@@ -5,9 +5,11 @@ import PaperCard from "../components/PaperCard";
 function Dashboard() {
   const [papers, setPapers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [category, setCategory] = useState("cs.AI");
-  const { token, user } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const displayName = user?.full_name || user?.email?.split('@')[0] || "there";
+  const API_BASE = "https://autoresearch-digest-beta-1.onrender.com";
 
   const categories = [
     { id: "cs.AI", label: "Artificial Intelligence" },
@@ -24,31 +26,28 @@ function Dashboard() {
 
   const fetchPapers = async () => {
     setLoading(true);
+    setError("");
     try {
-    //   const res = await fetch(
-    //     `https://autoresearch-digest-beta.onrender.com/papers?category=${category}&limit=10`,
-    const res = await fetch(
-  `https://autoresearch-digest-beta-1.onrender.com//papers?category=${category}&limit=10`,
-        { headers: { Authorization: `Bearer ${token}` }}
+      const res = await fetch(
+        `${API_BASE}/papers/?category=${category}&limit=10`
       );
+      if (!res.ok) {
+        throw new Error(`Failed to fetch papers (${res.status})`);
+      }
       const data = await res.json();
       setPapers(data.papers || []);
     } catch (err) {
-      console.error(err);
+      console.error("Dashboard fetch error:", err);
+      setError("Could not load papers. Check backend deploy/CORS and try again.");
     }
     setLoading(false);
   };
 
   const handleSimplify = async (paperId) => {
     try {
-    //   const res = await fetch(
-    //     `https://autoresearch-digest-beta.onrender.com/papers/${paperId}/simplify`,
     const res = await fetch(
-  `https://autoresearch-digest-beta-1.onrender.com//papers/${paperId}/simplify`,
-        { 
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` }
-        }
+      `${API_BASE}/papers/${paperId}/simplify`,
+      { method: "POST" }
       );
       const data = await res.json();
       if (data.success) {
@@ -92,13 +91,18 @@ function Dashboard() {
           ))}
         </div>
 
+        {error && (
+          <div style={{ marginBottom: "16px", color: "var(--danger)" }}>
+            {error}
+          </div>
+        )}
+
         <div className="papers-grid">
           {papers.map((paper, i) => (
         <PaperCard 
             key={i} 
             paper={paper} 
             onSimplify={handleSimplify}
-            token={token}
             userId={user?.id}
         />
           ))}
