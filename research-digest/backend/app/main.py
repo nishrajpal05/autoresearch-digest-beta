@@ -23,8 +23,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://autoresearch-frontend.onrender.com"
-        "https://autoresearch-digest-beta-1.onrender.com"
+        "https://autoresearch-frontend.onrender.com",
+        "https://autoresearch-digest-beta-1.onrender.com",
+        "https://autoresearch-digest-beta-2.onrender.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],

@@ -129,11 +129,11 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         jwt_token = create_access_token({"sub": str(user.id)})
 
         return RedirectResponse(
-            url=f"https://autoresearch-digest-beta-2.onrender.com/auth/callback?token={jwt_token}&user={user.id}"
+            url=f"https://autoresearch-digest-beta-2.onrender.com/#/auth/callback?token={jwt_token}&user={user.id}"
         )
     except Exception as e:
         return RedirectResponse(
-            url=f"https://autoresearch-digest-beta-2.onrender.com/login?error={str(e)}"
+            url=f"https://autoresearch-digest-beta-2.onrender.com/#/login?error={str(e)}"
         )
 
 
@@ -179,9 +179,9 @@ async def github_callback(request: Request, db: Session = Depends(get_db)):
         jwt_token = create_access_token({"sub": str(user.id)})
 
         return RedirectResponse(
-            url=f"https://autoresearch-digest-beta-2.onrender.com/auth/callback?token={jwt_token}&user={user.id}"
+            url=f"https://autoresearch-digest-beta-2.onrender.com/#/auth/callback?token={jwt_token}&user={user.id}"
         )
     except Exception as e:
         return RedirectResponse(
-            url=f"https://autoresearch-digest-beta-2.onrender.com/login?error={str(e)}"
+            url=f"https://autoresearch-digest-beta-2.onrender.com/#/login?error={str(e)}"
         )

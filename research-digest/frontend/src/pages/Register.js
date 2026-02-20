@@ -158,7 +158,7 @@ function GitHubIcon() {
         </form>
 
         <div className="auth-footer">
-          Already have an account? <a href="/login">Login</a>
+          Already have an account? <a href="#/login">Login</a>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, AuthContext } from "./context/AuthContext";
 import { useContext } from "react";
 import Navbar from "./components/Navbar";
@@ -25,7 +25,7 @@ function PublicRoute({ children }) {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <HashRouter>
         <Navbar />
         <Routes>
           <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
@@ -37,7 +37,7 @@ function App() {
           <Route path="/auth/callback" element={<OAuthCallback />} />
         </Routes>
         <Footer />
-      </BrowserRouter>
+      </HashRouter>
     </AuthProvider>
   );
 }
