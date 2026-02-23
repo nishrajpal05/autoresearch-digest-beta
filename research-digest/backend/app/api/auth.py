@@ -98,7 +98,7 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
 @router.get("/google")
 async def google_login(request: Request):
     redirect_uri = (
-        "https://autoresearch-digest-beta-1.onrender.com/auth/google/callback"
+        "https://autoresearch-digest-beta.onrender.com/auth/google/callback"
     )
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
@@ -129,18 +129,18 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         jwt_token = create_access_token({"sub": str(user.id)})
 
         return RedirectResponse(
-            url=f"https://autoresearch-digest-beta-2.onrender.com/#/auth/callback?token={jwt_token}&user={user.id}"
+            url=f"https://autoresearch-frontend.onrender.com/#/auth/callback?token={jwt_token}&user={user.id}"
         )
     except Exception as e:
         return RedirectResponse(
-            url=f"https://autoresearch-digest-beta-2.onrender.com/#/login?error={str(e)}"
+            url=f"https://autoresearch-frontend.onrender.com/#/login?error={str(e)}"
         )
 
 
 @router.get("/github")
 async def github_login(request: Request):
     redirect_uri = (
-        "https://autoresearch-digest-beta-1.onrender.com/auth/github/callback"
+        "https://autoresearch-digest-beta.onrender.com/auth/github/callback"
     )
     return await oauth.github.authorize_redirect(request, redirect_uri)
 
@@ -179,9 +179,9 @@ async def github_callback(request: Request, db: Session = Depends(get_db)):
         jwt_token = create_access_token({"sub": str(user.id)})
 
         return RedirectResponse(
-            url=f"https://autoresearch-digest-beta-2.onrender.com/#/auth/callback?token={jwt_token}&user={user.id}"
+            url=f"https://autoresearch-frontend.onrender.com/#/auth/callback?token={jwt_token}&user={user.id}"
         )
     except Exception as e:
         return RedirectResponse(
-            url=f"https://autoresearch-digest-beta-2.onrender.com/#/login?error={str(e)}"
+            url=f"https://autoresearch-frontend.onrender.com/#/login?error={str(e)}"
         )

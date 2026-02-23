@@ -9,7 +9,7 @@ function Dashboard() {
   const [category, setCategory] = useState("cs.AI");
   const { user } = useContext(AuthContext);
   const displayName = user?.full_name || user?.email?.split('@')[0] || "there";
-  const API_BASE = "https://autoresearch-digest-beta-1.onrender.com";
+  const API_BASE = "https://autoresearch-digest-beta.onrender.com";
 
   const categories = [
     { id: "cs.AI", label: "Artificial Intelligence" },
@@ -45,18 +45,29 @@ function Dashboard() {
 
   const handleSimplify = async (paperId) => {
     try {
-    const res = await fetch(
-      `${API_BASE}/papers/${paperId}/simplify`,
-      { method: "POST" }
+      const res = await fetch(
+        `${API_BASE}/papers/${paperId}/simplify`,
+        { method: "POST" }
       );
-      const data = await res.json();
-      if (data.success) {
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        return {
+          success: false,
+          error: data.detail || `Simplify failed (${res.status})`
+        };
+      }
+
+      if (data.success && data.simplified) {
         setPapers(prev => prev.map(p => 
           p.db_id === paperId ? { ...p, simplified: data.simplified } : p
         ));
+        return { success: true };
       }
+      return { success: false, error: "No simplified output returned." };
     } catch (err) {
       console.error(err);
+      return { success: false, error: "Network error while simplifying. Please try again." };
     }
   };
 

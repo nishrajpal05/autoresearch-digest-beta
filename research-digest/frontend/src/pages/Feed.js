@@ -6,6 +6,7 @@ function Feed() {
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("cs.AI");
   const [simplifying, setSimplifying] = useState({});
+  const [error, setError] = useState("");
   const { token, user, logout } = useContext(AuthContext);
 
   useEffect(() => {
@@ -25,18 +26,30 @@ function Feed() {
 
   const simplifyPaper = async (paperId) => {
     setSimplifying(prev => ({ ...prev, [paperId]: true }));
-    const res = await fetch(
-      `https://autoresearch-digest-beta.onrender.com/papers/${paperId}/simplify`,
-      { 
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` }
+    setError("");
+    try {
+      const res = await fetch(
+        `https://autoresearch-digest-beta.onrender.com/papers/${paperId}/simplify`,
+        { 
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.detail || `Simplify failed (${res.status})`);
       }
-    );
-    const data = await res.json();
-    if (data.success) {
-      setPapers(prev => prev.map(p => 
-        p.db_id === paperId ? { ...p, simplified: data.simplified } : p
-      ));
+
+      if (data.success && data.simplified) {
+        setPapers(prev => prev.map(p => 
+          p.db_id === paperId ? { ...p, simplified: data.simplified } : p
+        ));
+      } else {
+        throw new Error("No simplified output returned.");
+      }
+    } catch (err) {
+      setError(err.message || "Network error while simplifying. Please try again.");
     }
     setSimplifying(prev => ({ ...prev, [paperId]: false }));
   };
@@ -55,6 +68,10 @@ function Feed() {
         <button className={category === "cs.LG" ? "active" : ""} onClick={() => setCategory("cs.LG")}>ML</button>
         <button className={category === "cs.CV" ? "active" : ""} onClick={() => setCategory("cs.CV")}>CV</button>
       </div>
+
+      {error && (
+        <p style={{ color: "var(--danger)", margin: "12px 0" }}>{error}</p>
+      )}
 
       <main className="papers-container">
         {papers.map((paper, i) => (
