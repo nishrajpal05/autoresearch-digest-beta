@@ -5,10 +5,15 @@ function PaperCard({ paper, onSimplify, userId, isBookmarked = false }) {
   const [loading, setLoading] = useState(false);
   const [bookmarked, setBookmarked] = useState(isBookmarked);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
+  const [simplifyError, setSimplifyError] = useState("");
 
   const handleSimplify = async () => {
     setLoading(true);
-    await onSimplify(paper.db_id);
+    setSimplifyError("");
+    const result = await onSimplify(paper.db_id);
+    if (!result?.success) {
+      setSimplifyError(result?.error || "Could not simplify this paper right now.");
+    }
     setLoading(false);
   };
 
@@ -19,7 +24,7 @@ function PaperCard({ paper, onSimplify, userId, isBookmarked = false }) {
 
     try {
       const res = await fetch(
-        `https://autoresearch-digest-beta-1.onrender.com/papers/${paper.db_id}/bookmark?user_id=${userId}`,
+        `https://autoresearch-digest-beta.onrender.com/papers/${paper.db_id}/bookmark?user_id=${userId}`,
         // `http://localhost:8000papers/${paper.db_id}/bookmark?user_id=${userId}`,
         { method: "POST" }
       );
@@ -59,6 +64,12 @@ function PaperCard({ paper, onSimplify, userId, isBookmarked = false }) {
             {paper.simplified}
           </p>
         </div>
+      )}
+
+      {simplifyError && (
+        <p style={{ color: "var(--danger)", marginBottom: "12px" }}>
+          {simplifyError}
+        </p>
       )}
 
       <div className="paper-actions">

@@ -15,7 +15,7 @@ function Bookmarks() {
     setLoading(true);
     try {
       const res = await fetch(
-        `https://autoresearch-digest-beta-1.onrender.com/papers/bookmarks/${user.id}`
+        `https://autoresearch-digest-beta.onrender.com/papers/bookmarks/${user.id}`
       );
       const data = await res.json();
       setBookmarks(data.papers || []);
@@ -28,17 +28,28 @@ function Bookmarks() {
   const handleSimplify = async (paperId) => {
     try {
       const res = await fetch(
-        `https://autoresearch-digest-beta-1.onrender.com/papers/${paperId}/simplify`,
+        `https://autoresearch-digest-beta.onrender.com/papers/${paperId}/simplify`,
         { method: "POST" }
       );
-      const data = await res.json();
-      if (data.success) {
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        return {
+          success: false,
+          error: data.detail || `Simplify failed (${res.status})`
+        };
+      }
+
+      if (data.success && data.simplified) {
         setBookmarks(prev => prev.map(p => 
           p.db_id === paperId ? { ...p, simplified: data.simplified } : p
         ));
+        return { success: true };
       }
+      return { success: false, error: "No simplified output returned." };
     } catch (err) {
       console.error(err);
+      return { success: false, error: "Network error while simplifying. Please try again." };
     }
   };
 
