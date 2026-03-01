@@ -2,6 +2,8 @@ import React, { useContext, useEffect, useState } from 'react';
 import PaperCard from '../components/PaperCard';
 import { AuthContext } from '../context/AuthContext';
 import API_BASE_URL from '../config/api';
+import NotificationBell from '../components/NotificationBell';
+import TopicManager from '../components/TopicManager';
 
 const CATEGORIES = [
   { id: 'cs.AI', label: 'Artificial Intelligence' },
@@ -76,8 +78,8 @@ const AccessBanner = ({ access }) => {
         fontWeight: 600,
       }}
     >
-      Free plan: novelty, trend and reading time are always free. Manual AI unlocks left today: {access.remaining_today}/
-      {access.free_daily_limit}.
+      Free plan: novelty, trend and reading time are always free. Manual AI unlocks left today:{' '}
+      {access.remaining_today}/{access.free_daily_limit}.
     </div>
   );
 };
@@ -136,16 +138,47 @@ export default function Dashboard() {
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
       <div style={{ maxWidth: 820, margin: '0 auto', padding: '36px 18px' }}>
-        <div style={{ marginBottom: 22 }}>
-          <h1 style={{ fontSize: 30, color: '#0f172a', marginBottom: 6, letterSpacing: -0.4 }}>Research Feed</h1>
-          <p style={{ margin: 0, color: '#64748b', fontSize: 14 }}>
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-          </p>
+
+        {/* 🔔 Header with Notification Bell */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            marginBottom: 32,
+          }}
+        >
+          <div>
+            <h1
+              style={{
+                fontSize: 28,
+                fontWeight: 750,
+                color: '#0f172a',
+                letterSpacing: -0.5,
+                marginBottom: 4,
+              }}
+            >
+              Research Feed
+            </h1>
+            <p style={{ fontSize: 15, color: '#64748b', margin: 0 }}>
+              {new Date().toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </p>
+          </div>
+
+          <NotificationBell />
         </div>
 
         <AccessBanner access={access} />
         <StatBar stats={stats} />
 
+        {/* 🧠 Topic Manager (NEW) */}
+        <TopicManager />
+
+        {/* Filters */}
         <div
           style={{
             display: 'flex',
@@ -197,22 +230,27 @@ export default function Dashboard() {
           </select>
         </div>
 
+        {/* Papers */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {papers.map((paper) => (
             <PaperCard
               key={paper.id}
               paper={paper}
               access={access}
-              onUsageUpdate={(usage) => setAccess((prev) => ({ ...(prev || {}), ...(usage || {}) }))}
+              onUsageUpdate={(usage) =>
+                setAccess((prev) => ({ ...(prev || {}), ...(usage || {}) }))
+              }
             />
           ))}
         </div>
 
-        {loading ? (
-          <div style={{ marginTop: 16, color: '#64748b', fontSize: 13 }}>Loading papers...</div>
-        ) : null}
+        {loading && (
+          <div style={{ marginTop: 16, color: '#64748b', fontSize: 13 }}>
+            Loading papers...
+          </div>
+        )}
 
-        {!loading && hasMore ? (
+        {!loading && hasMore && (
           <button
             onClick={() => loadPapers(offset)}
             style={{
@@ -229,11 +267,20 @@ export default function Dashboard() {
           >
             Load more papers
           </button>
-        ) : null}
+        )}
 
-        {!loading && !hasMore && papers.length > 0 ? (
-          <div style={{ marginTop: 18, textAlign: 'center', color: '#94a3b8', fontSize: 12 }}>End of list</div>
-        ) : null}
+        {!loading && !hasMore && papers.length > 0 && (
+          <div
+            style={{
+              marginTop: 18,
+              textAlign: 'center',
+              color: '#94a3b8',
+              fontSize: 12,
+            }}
+          >
+            End of list
+          </div>
+        )}
       </div>
     </div>
   );

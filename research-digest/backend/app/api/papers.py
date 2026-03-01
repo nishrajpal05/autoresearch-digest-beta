@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
 from typing import Optional
-
+from app.services.topic_matcher import match_paper_against_all_watches
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
@@ -86,6 +86,7 @@ async def get_papers(
     background_tasks: BackgroundTasks = None,
     db: Session = Depends(get_db),
 ):
+    # Fetch & store new papers if category provided
     if category:
         try:
             raw_papers = fetch_papers(category=category, max_results=30)
@@ -95,44 +96,71 @@ async def get_papers(
                     new_paper = Paper(
                         arxiv_id=p["id"],
                         title=p["title"],
-                        authors=[a.strip() for a in p["authors"].replace(" et al.", "").split(",")],
+                        authors=[
+                            a.strip()
+                            for a in p["authors"].replace(" et al.", "").split(",")
+                        ],
                         summary=p["summary"],
                         pdf_url=p["pdf_url"],
                         published=_parse_published(p.get("published")),
                         category=p["category"],
                     )
                     db.add(new_paper)
+                    db.flush()
+
+                    # Match against topic watches
+                    match_paper_against_all_watches(db, new_paper)
+
             db.commit()
         except Exception as e:
             db.rollback()
             print(f"[Papers] arXiv fetch error: {e}")
 
+    # Base query
     query = db.query(Paper)
+
     if category:
         query = query.filter(Paper.category == category)
 
+    # Sorting
     if sort == "novelty":
         query = query.order_by(desc(Paper.novelty_score))
     elif sort == "trending":
         three_days_ago = datetime.utcnow() - timedelta(days=3)
-        query = query.filter(Paper.published >= three_days_ago).order_by(desc(Paper.novelty_score))
+        query = query.filter(
+            Paper.published >= three_days_ago
+        ).order_by(desc(Paper.novelty_score))
     else:
         query = query.order_by(desc(Paper.published))
 
     total = query.count()
     papers = query.offset(offset).limit(limit).all()
 
+    # User / access logic
     user = db.query(User).filter_by(id=user_id).first() if user_id else None
     is_premium = bool(user and user.is_premium)
+
     free_limit = FREE_LIMITS["enrich_paper"]
     used_today = get_usage_today(db, user_id, "enrich_paper") if user_id else 0
     remaining_today = max(free_limit - used_today, 0)
 
+    # Ensure metadata is enriched
     changed = False
     for paper in papers:
-        before = (paper.novelty_score, paper.trend_signal, paper.reading_time_minutes)
+        before = (
+            paper.novelty_score,
+            paper.trend_signal,
+            paper.reading_time_minutes,
+        )
+
         enrich_paper_metadata(db, paper, force=False)
-        after = (paper.novelty_score, paper.trend_signal, paper.reading_time_minutes)
+
+        after = (
+            paper.novelty_score,
+            paper.trend_signal,
+            paper.reading_time_minutes,
+        )
+
         if before != after:
             changed = True
 
@@ -141,13 +169,19 @@ async def get_papers(
         for paper in papers:
             db.refresh(paper)
 
+    # Background enrichment for premium users
     if is_premium and background_tasks is not None:
         for paper in papers:
-            if paper.simplified_summary is None or paper.practitioner_verdict is None:
+            if (
+                paper.simplified_summary is None
+                or paper.practitioner_verdict is None
+            ):
                 background_tasks.add_task(_background_enrich_paper, paper.id)
 
     return {
-        "papers": [paper_to_dict(p, user_id=user_id, db=db) for p in papers],
+        "papers": [
+            paper_to_dict(p, user_id=user_id, db=db) for p in papers
+        ],
         "total": total,
         "offset": offset,
         "access": {

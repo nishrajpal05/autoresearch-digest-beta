@@ -1,21 +1,27 @@
 from dotenv import load_dotenv
 from pathlib import Path
 import os
+
 env_path = Path(__file__).parent.parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
-from fastapi import FastAPI  # noqa: E402
-from fastapi.middleware.cors import CORSMiddleware # noqa: E402
-from starlette.middleware.sessions import SessionMiddleware # noqa: E402
-from .db.database import engine, Base # noqa: E402
-from .api import auth, papers  # noqa: E402
+from fastapi import FastAPI                                    # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware             # noqa: E402
+from starlette.middleware.sessions import SessionMiddleware    # noqa: E402
 
+from .db.database import engine, Base                         # noqa: E402
+from .api import auth, papers                                 # noqa: E402
+from .api.topics import router as topics_router               # noqa: E402
+
+# Create all DB tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="AutoResearch Digest API v2", version="2.0.0")
 
+# ── Middleware ────────────────────────────────────────────────────────────────
+
 app.add_middleware(
-    SessionMiddleware, 
+    SessionMiddleware,
     secret_key=os.getenv("SECRET_KEY", "dev-secret-key")
 )
 
@@ -23,9 +29,6 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        os.getenv("FRONTEND_URL_LOCAL", "http://localhost:3000"),
-        os.getenv("FRONTEND_URL_RENDER", "https://autoresearch-frontend.onrender.com"),
         "https://autoresearch-frontend.onrender.com"
     ],
     allow_credentials=True,
@@ -33,8 +36,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ── Routers ───────────────────────────────────────────────────────────────────
+
 app.include_router(auth.router)
 app.include_router(papers.router)
+app.include_router(topics_router)
+
+# ── Health ────────────────────────────────────────────────────────────────────
 
 @app.get("/")
 def home():
