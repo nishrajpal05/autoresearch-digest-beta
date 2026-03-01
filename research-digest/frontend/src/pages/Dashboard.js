@@ -1,110 +1,240 @@
-import { useState, useEffect, useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
-import PaperCard from "../components/PaperCard";
+import React, { useContext, useEffect, useState } from 'react';
+import PaperCard from '../components/PaperCard';
+import { AuthContext } from '../context/AuthContext';
+import API_BASE_URL from '../config/api';
 
-function Dashboard() {
-  const [papers, setPapers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [category, setCategory] = useState("cs.AI");
-  const { token, user } = useContext(AuthContext);
+const CATEGORIES = [
+  { id: 'cs.AI', label: 'Artificial Intelligence' },
+  { id: 'cs.LG', label: 'Machine Learning' },
+  { id: 'cs.CV', label: 'Computer Vision' },
+  { id: 'cs.CL', label: 'NLP' },
+  { id: 'cs.RO', label: 'Robotics' },
+  { id: 'cs.CR', label: 'Cryptography' },
+];
 
-  const categories = [
-    { id: "cs.AI", label: "Artificial Intelligence" },
-    { id: "cs.LG", label: "Machine Learning" },
-    { id: "cs.CV", label: "Computer Vision" },
-    { id: "cs.CL", label: "NLP" },
-    { id: "cs.RO", label: "Robotics" },
-    { id: "cs.CR", label: "Cryptography" }
-  ];
+const SORTS = [
+  { id: 'recent', label: 'Recent' },
+  { id: 'novelty', label: 'Most Novel' },
+  { id: 'trending', label: 'Trending' },
+];
 
-  useEffect(() => {
-    fetchPapers();
-  }, [category]);
+const StatBar = ({ stats }) => {
+  if (!stats?.length) return null;
+  return (
+    <div style={{ display: 'flex', gap: 10, overflowX: 'auto', marginBottom: 20 }}>
+      {stats.map((s) => (
+        <div
+          key={s.category}
+          style={{
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: 10,
+            padding: '10px 14px',
+            minWidth: 120,
+          }}
+        >
+          <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 700 }}>{s.category}</div>
+          <div style={{ fontSize: 20, color: '#0f172a', fontWeight: 700 }}>{s.recent_count}</div>
+          <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{s.signal}</div>
+        </div>
+      ))}
+    </div>
+  );
+};
 
-  const fetchPapers = async () => {
-    setLoading(true);
-    try {
-    //   const res = await fetch(
-    //     `https://autoresearch-digest-beta.onrender.com/papers?category=${category}&limit=10`,
-    const res = await fetch(
-  `http://localhost:8000/papers?category=${category}&limit=10`,
-        { headers: { Authorization: `Bearer ${token}` }}
-      );
-      const data = await res.json();
-      setPapers(data.papers || []);
-    } catch (err) {
-      console.error(err);
-    }
-    setLoading(false);
-  };
+const AccessBanner = ({ access }) => {
+  if (!access) return null;
 
-  const handleSimplify = async (paperId) => {
-    try {
-    //   const res = await fetch(
-    //     `https://autoresearch-digest-beta.onrender.com/papers/${paperId}/simplify`,
-    const res = await fetch(
-  `http://localhost:8000/papers/${paperId}/simplify`,
-        { 
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-      const data = await res.json();
-      if (data.success) {
-        setPapers(prev => prev.map(p => 
-          p.db_id === paperId ? { ...p, simplified: data.simplified } : p
-        ));
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  if (loading) {
+  if (access.is_premium) {
     return (
-      <div className="loading-container">
-        <div className="spinner"></div>
-        <p style={{ marginTop: '16px', color: 'var(--text-secondary)' }}>
-          Loading papers...
-        </p>
+      <div
+        style={{
+          background: 'linear-gradient(90deg, #082f49 0%, #0f172a 100%)',
+          color: '#e2e8f0',
+          borderRadius: 12,
+          padding: '12px 14px',
+          marginBottom: 16,
+          fontSize: 13,
+          fontWeight: 600,
+        }}
+      >
+        Pro active: full intelligence is visible and papers auto-analyze in the background while you browse.
       </div>
     );
   }
 
   return (
-    <div className="dashboard">
-      <div className="container">
-        <div className="dashboard-header">
-          <h1>Welcome back, {user?.email?.split('@')[0] || 'there'}</h1>
-          <p>Discover the latest research in your field</p>
+    <div
+      style={{
+        background: '#fff7ed',
+        color: '#9a3412',
+        border: '1px solid #fdba74',
+        borderRadius: 12,
+        padding: '12px 14px',
+        marginBottom: 16,
+        fontSize: 13,
+        fontWeight: 600,
+      }}
+    >
+      Free plan: novelty, trend and reading time are always free. Manual AI unlocks left today: {access.remaining_today}/
+      {access.free_daily_limit}.
+    </div>
+  );
+};
+
+export default function Dashboard() {
+  const { user } = useContext(AuthContext);
+
+  const [papers, setPapers] = useState([]);
+  const [stats, setStats] = useState([]);
+  const [access, setAccess] = useState(null);
+  const [category, setCategory] = useState('cs.AI');
+  const [sort, setSort] = useState('recent');
+  const [loading, setLoading] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+
+  const LIMIT = 10;
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/papers/stats`)
+      .then((r) => r.json())
+      .then((d) => setStats(d.stats || []))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    setPapers([]);
+    setOffset(0);
+    setHasMore(true);
+    loadPapers(0, true);
+  }, [category, sort]);
+
+  const loadPapers = async (currentOffset = 0, reset = false) => {
+    setLoading(true);
+    try {
+      const userId = user?.id ? `&user_id=${user.id}` : '';
+      const url = `${API_BASE_URL}/papers?category=${category}&limit=${LIMIT}&offset=${currentOffset}&sort=${sort}${userId}`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      const incoming = data.papers || [];
+      setPapers((prev) => (reset ? incoming : [...prev, ...incoming]));
+      setHasMore(incoming.length === LIMIT);
+      setOffset(currentOffset + incoming.length);
+
+      if (data.access) {
+        setAccess((prev) => ({ ...(prev || {}), ...data.access }));
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
+      <div style={{ maxWidth: 820, margin: '0 auto', padding: '36px 18px' }}>
+        <div style={{ marginBottom: 22 }}>
+          <h1 style={{ fontSize: 30, color: '#0f172a', marginBottom: 6, letterSpacing: -0.4 }}>Research Feed</h1>
+          <p style={{ margin: 0, color: '#64748b', fontSize: 14 }}>
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          </p>
         </div>
 
-        <div className="category-filter">
-          {categories.map(cat => (
-            <button
-              key={cat.id}
-              className={`category-btn ${category === cat.id ? 'active' : ''}`}
-              onClick={() => setCategory(cat.id)}
-            >
-              {cat.label}
-            </button>
+        <AccessBanner access={access} />
+        <StatBar stats={stats} />
+
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 12,
+            flexWrap: 'wrap',
+            marginBottom: 18,
+          }}
+        >
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {CATEGORIES.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => setCategory(c.id)}
+                style={{
+                  border: category === c.id ? '1px solid #0f172a' : '1px solid #cbd5e1',
+                  background: category === c.id ? '#0f172a' : '#fff',
+                  color: category === c.id ? '#fff' : '#334155',
+                  borderRadius: 999,
+                  padding: '7px 12px',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            style={{
+              border: '1px solid #cbd5e1',
+              background: '#fff',
+              borderRadius: 10,
+              padding: '8px 10px',
+              fontSize: 12,
+              fontWeight: 700,
+            }}
+          >
+            {SORTS.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {papers.map((paper) => (
+            <PaperCard
+              key={paper.id}
+              paper={paper}
+              access={access}
+              onUsageUpdate={(usage) => setAccess((prev) => ({ ...(prev || {}), ...(usage || {}) }))}
+            />
           ))}
         </div>
 
-        <div className="papers-grid">
-          {papers.map((paper, i) => (
-        <PaperCard 
-            key={i} 
-            paper={paper} 
-            onSimplify={handleSimplify}
-            token={token}
-            userId={user?.id}
-        />
-          ))}
-        </div>
+        {loading ? (
+          <div style={{ marginTop: 16, color: '#64748b', fontSize: 13 }}>Loading papers...</div>
+        ) : null}
+
+        {!loading && hasMore ? (
+          <button
+            onClick={() => loadPapers(offset)}
+            style={{
+              marginTop: 20,
+              width: '100%',
+              border: '1px solid #cbd5e1',
+              background: '#fff',
+              borderRadius: 10,
+              padding: '11px 12px',
+              fontWeight: 700,
+              color: '#334155',
+              cursor: 'pointer',
+            }}
+          >
+            Load more papers
+          </button>
+        ) : null}
+
+        {!loading && !hasMore && papers.length > 0 ? (
+          <div style={{ marginTop: 18, textAlign: 'center', color: '#94a3b8', fontSize: 12 }}>End of list</div>
+        ) : null}
       </div>
     </div>
   );
 }
-
-export default Dashboard;

@@ -6,7 +6,6 @@ def fetch_papers(category: str = "cs.AI", max_results: int = 10) -> List[Dict]:
     
     print(f" Fetching {max_results} papers from {category}...")
     
-    # Search arXiv (like searching Google)
     search = arxiv.Search(
         query=f"cat:{category}",  # cat means "category"
         max_results=max_results,
@@ -33,7 +32,7 @@ def fetch_papers(category: str = "cs.AI", max_results: int = 10) -> List[Dict]:
             "authors": authors_text,
             "summary": result.summary.replace("\n", " ")[:500] + "...",  # First 500 characters
             "pdf_url": result.pdf_url,  # Link to download PDF
-            "published": str(result.published.date()),  # When was it published?
+            "published": result.published,  # Keep datetime for DB DateTime column
             "category": category
         }
         

@@ -1,6 +1,7 @@
 import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import API_BASE_URL from "../config/api";
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -17,7 +18,7 @@ function Register() {
     setError("");
 
     try {
-      const res = await fetch("http://localhost:8000/auth/register", {
+      const res = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -41,7 +42,7 @@ function Register() {
   };
 
   const handleOAuthLogin = (provider) => {
-    window.location.href = `http://localhost:8000/auth/${provider}`;
+    window.location.href = `${API_BASE_URL}/auth/${provider}`;
   };
 
   return (

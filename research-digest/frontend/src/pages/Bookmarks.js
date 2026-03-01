@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import PaperCard from "../components/PaperCard";
+import API_BASE_URL from "../config/api";
 
 function Bookmarks() {
   const [bookmarks, setBookmarks] = useState([]);
@@ -15,7 +16,7 @@ function Bookmarks() {
     setLoading(true);
     try {
       const res = await fetch(
-        `http://localhost:8000/papers/bookmarks/${user.id}`,
+        `${API_BASE_URL}/papers/bookmarks/${user.id}`,
         { headers: { Authorization: `Bearer ${token}` }}
       );
       const data = await res.json();
@@ -29,7 +30,7 @@ function Bookmarks() {
   const handleSimplify = async (paperId) => {
     try {
       const res = await fetch(
-        `http://localhost:8000/papers/${paperId}/simplify`,
+        `${API_BASE_URL}/papers/${paperId}/simplify`,
         { 
           method: "POST",
           headers: { Authorization: `Bearer ${token}` }

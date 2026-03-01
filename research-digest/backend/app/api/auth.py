@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
+import os
 from ..db.database import get_db
 from ..models.user import User
 from ..services.auth import get_password_hash, verify_password, create_access_token
@@ -8,6 +9,17 @@ from ..services.oauth import oauth
 from pydantic import BaseModel, EmailStr
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+LOCAL_FRONTEND_URL = os.getenv("FRONTEND_URL_LOCAL", "http://localhost:3000").rstrip("/")
+LOCAL_BACKEND_URL = os.getenv("BACKEND_URL_LOCAL", "http://localhost:8000").rstrip("/")
+RENDER_FRONTEND_URL = os.getenv("FRONTEND_URL_RENDER", "https://autoresearch-frontend.onrender.com").rstrip("/")
+RENDER_BACKEND_URL = os.getenv("BACKEND_URL_RENDER", "https://autoresearch-digest-beta.onrender.com").rstrip("/")
+
+
+def _resolve_urls(request: Request) -> tuple[str, str]:
+    host = (request.url.hostname or "").lower()
+    if "onrender.com" in host:
+        return RENDER_FRONTEND_URL, RENDER_BACKEND_URL
+    return LOCAL_FRONTEND_URL, LOCAL_BACKEND_URL
 
 class UserRegister(BaseModel):
     email: EmailStr
@@ -34,7 +46,15 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
     db.refresh(new_user)
     
     token = create_access_token({"sub": str(new_user.id)})
-    return {"token": token, "user": {"id": new_user.id, "email": new_user.email, "full_name": new_user.full_name}}
+    return {
+        "token": token,
+        "user": {
+            "id": new_user.id,
+            "email": new_user.email,
+            "full_name": new_user.full_name,
+            "is_premium": bool(new_user.is_premium),
+        },
+    }
 
 @router.post("/login")
 def login(user_data: UserLogin, db: Session = Depends(get_db)):
@@ -43,15 +63,26 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     token = create_access_token({"sub": str(user.id)})
-    return {"token": token, "user": {"id": user.id, "email": user.email, "full_name": user.full_name}}
+    return {
+        "token": token,
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "is_premium": bool(user.is_premium),
+        },
+    }
 
 @router.get("/google")
 async def google_login(request: Request):
-    redirect_uri = "http://localhost:8000/auth/google/callback"
+    _, backend_url = _resolve_urls(request)
+
+    redirect_uri = f"{backend_url}/auth/google/callback"
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 @router.get("/google/callback")
 async def google_callback(request: Request, db: Session = Depends(get_db)):
+    frontend_url, _ = _resolve_urls(request)
     try:
         token = await oauth.google.authorize_access_token(request)
         user_info = token.get('userinfo')
@@ -76,18 +107,20 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         jwt_token = create_access_token({"sub": str(user.id)})
         
         return RedirectResponse(
-            url=f"http://localhost:3000/auth/callback?token={jwt_token}&user={user.id}"
+            url=f"{frontend_url}/auth/callback?token={jwt_token}&user={user.id}"
         )
     except Exception as e:
-        return RedirectResponse(url=f"http://localhost:3000/login?error={str(e)}")
+        return RedirectResponse(url=f"{frontend_url}/login?error={str(e)}")
 
 @router.get("/github")
 async def github_login(request: Request):
-    redirect_uri = "http://localhost:8000/auth/github/callback"
+    _, backend_url = _resolve_urls(request)
+    redirect_uri = f"{backend_url}/auth/github/callback"
     return await oauth.github.authorize_redirect(request, redirect_uri)
 
 @router.get("/github/callback")
 async def github_callback(request: Request, db: Session = Depends(get_db)):
+    frontend_url, _ = _resolve_urls(request)
     try:
         token = await oauth.github.authorize_access_token(request)
         
@@ -120,7 +153,7 @@ async def github_callback(request: Request, db: Session = Depends(get_db)):
         jwt_token = create_access_token({"sub": str(user.id)})
         
         return RedirectResponse(
-            url=f"http://localhost:3000/auth/callback?token={jwt_token}&user={user.id}"
+            url=f"{frontend_url}/auth/callback?token={jwt_token}&user={user.id}"
         )
     except Exception as e:
-        return RedirectResponse(url=f"http://localhost:3000/login?error={str(e)}")
+        return RedirectResponse(url=f"{frontend_url}/login?error={str(e)}")
